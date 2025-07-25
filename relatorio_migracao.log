@@ -1,0 +1,7 @@
+📋 Relatório de migração - sex 25 jul 2025 10:41:12 -03
+🔄 Iniciando migração parcial para App Router...
+✅ Pastas criadas: app/clientes e app/api/clientes
+✅ Copiado pages/index.js para app/clientes/page.js
+✅ Imports ajustados em app/clientes/page.js
+✅ API placeholder criada em app/api/clientes/route.js
+✅ Migração finalizada. Verifique relatorio_migracao.log para detalhes.
