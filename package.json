@@ -16,7 +16,8 @@
     "next-auth": "^4.24.11",
     "node-fetch": "^3.3.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/next-auth": "^3.13.0",
