@@ -1,57 +1,63 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/auth"; // ✅ Caminho relativo correto
+import { authOptions } from "../../../lib/auth";
+import * as XLSX from "xlsx";
 
-export async function GET() {
-  console.log("🔍 [API] Iniciando leitura da planilha do OneDrive...");
+export async function GET(req) {
+  console.log("📥 Incoming request headers:", Object.fromEntries(req.headers));
 
   try {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      console.error("❌ Nenhum token de acesso encontrado");
-      return new Response(JSON.stringify([])); // ✅ Retorna array vazio
-    }
-
-    const token = session.accessToken;
-    const filePath = "/data/deals.xlsx";
-
-    const rangeRes = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/root:${filePath}:/workbook/worksheets('Sheet1')/range(address='A1:H3000')`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    const rangeData = await rangeRes.json();
-    const rows = rangeData.values || [];
-
-    if (rows.length < 2) {
-      console.warn("⚠️ Nenhum dado encontrado na planilha");
+      console.error("❌ No access token found");
       return new Response(JSON.stringify([]));
     }
 
-    const headers = rows[0];
-    console.log("📌 Cabeçalhos detectados:", headers);
+    const token = session.accessToken;
+    const fileUrl =
+      "https://graph.microsoft.com/v1.0/me/drive/root:/data/deals.xlsx:/content";
 
-    const clientes = rows.slice(1).map((row) => {
-      const obj = {};
-      headers.forEach((h, i) => (obj[h] = row[i]));
-      return {
-        empresa: obj["Organização - Nome"] || "",
-        contato: obj["Negócio - Pessoa de contato"] || "",
-        segmento: obj["Organização - Segmento"] || "",
-        porte: obj["Organização - Tamanho da empresa"] || "",
-        estado: obj["uf"] || "",
-        cidade: obj["cidade_estimada"] || "",
-        cargo: obj["Pessoa - Cargo"] || "Não Informado",
-        telefone: obj["Pessoa - Telefone"] || obj["Pessoa - Celular"] || "",
-        email: obj["Pessoa - Email - Work"] || "",
+    const fileRes = await fetch(fileUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const arrayBuffer = await fileRes.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    if (!rows.length) {
+      console.warn("⚠️ No rows found in spreadsheet");
+      return new Response(JSON.stringify([]));
+    }
+
+    console.log("📌 Headers detected:", Object.keys(rows[0]));
+
+    const clientes = rows.map((row, idx) => {
+      const cliente = {
+        company: row["Organização - Nome"],
+        contact: row["Negócio - Pessoa de contato"],
+        segment: row["Organização - Segmento"],
+        size: row["Organização - Tamanho da empresa"],
+        state: row["uf"],
+        city: row["cidade_estimada"],
+        phone: row["Pessoa - Telefone"] || row["Pessoa - Celular"],
+        email: row["Pessoa - Email - Work"],
+        role: row["Pessoa - Cargo"] || "Not Provided",
       };
+
+      for (const [key, value] of Object.entries(cliente)) {
+        if (value === undefined) {
+          console.log(`⚠️ Field ${key} undefined at row ${idx + 2}`);
+        }
+      }
+
+      return cliente;
     });
 
-    console.log("✅ Clientes processados:", clientes.slice(0, 3));
+    console.log("✅ First processed rows:", clientes.slice(0, 5));
 
     return new Response(JSON.stringify(clientes));
   } catch (error) {
-    console.error("❌ Erro ao ler a planilha do OneDrive:", error);
+    console.error("❌ Error reading spreadsheet:", error);
     return new Response(JSON.stringify([]));
   }
 }
-

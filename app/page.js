@@ -1,12 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import ClienteCard from '../components/ClienteCard';
 
-export async function getStaticProps() {
-  const filePath = path.join(process.cwd(), 'data', 'clientes.json');
-  const jsonData = fs.readFileSync(filePath, 'utf-8');
-  const clientesData = JSON.parse(jsonData);
+export async function getServerSideProps() {
+  const res = await fetch('http://localhost:3000/api/clientes');
+  const clientesData = await res.json();
 
   return {
     props: { clientesData },

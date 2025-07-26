@@ -3,16 +3,16 @@ import { useState, useEffect } from "react";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([]);
-  const [busca, setBusca] = useState("");
-  const [filtroSegmento, setFiltroSegmento] = useState("");
-  const [filtroPorte, setFiltroPorte] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("");
-  const [filtroCidade, setFiltroCidade] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterSegment, setFilterSegment] = useState("");
+  const [filterSize, setFilterSize] = useState("");
+  const [filterState, setFilterState] = useState("");
+  const [filterCity, setFilterCity] = useState("");
 
-  const [segmentos, setSegmentos] = useState([]);
-  const [portes, setPortes] = useState([]);
-  const [estados, setEstados] = useState([]);
-  const [cidades, setCidades] = useState([]);
+  const [segments, setSegments] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
     async function fetchClientes() {
@@ -22,27 +22,29 @@ export default function ClientesPage() {
 
         setClientes(data);
 
-        setSegmentos([...new Set(data.map(c => c.segmento).filter(Boolean))]);
-        setPortes([...new Set(data.map(c => c.porte).filter(Boolean))]);
-        setEstados([...new Set(data.map(c => c.estado).filter(Boolean))]);
-        setCidades([...new Set(data.map(c => c.cidade).filter(Boolean))]);
+        setSegments([...new Set(data.map((c) => c.segment).filter(Boolean))]);
+        setSizes([...new Set(data.map((c) => c.size).filter(Boolean))]);
+        setStates([...new Set(data.map((c) => c.state).filter(Boolean))]);
+        setCities([...new Set(data.map((c) => c.city).filter(Boolean))]);
       } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
+        console.error("Error fetching clients:", error);
       }
     }
     fetchClientes();
   }, []);
 
-  const clientesFiltrados = Array.isArray(clientes) ? clientes.filter((c) => {
-    const termoBusca = busca.toLowerCase();
-    return (
-      (!filtroSegmento || c.segmento === filtroSegmento) &&
-      (!filtroPorte || c.porte === filtroPorte) &&
-      (!filtroEstado || c.estado === filtroEstado) &&
-      (!filtroCidade || c.cidade === filtroCidade) &&
-      (!busca || c.empresa.toLowerCase().includes(termoBusca))
-    );
-  }) : [];
+  const filtered = Array.isArray(clientes)
+    ? clientes.filter((c) => {
+        const term = search.toLowerCase();
+        return (
+          (!filterSegment || c.segment === filterSegment) &&
+          (!filterSize || c.size === filterSize) &&
+          (!filterState || c.state === filterState) &&
+          (!filterCity || c.city === filterCity) &&
+          (!search || c.company.toLowerCase().includes(term))
+        );
+      })
+    : [];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -52,68 +54,79 @@ export default function ClientesPage() {
         <input
           type="text"
           placeholder="Buscar por nome"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="col-span-2 p-2 border rounded"
         />
 
         <select
-          value={filtroSegmento}
-          onChange={(e) => setFiltroSegmento(e.target.value)}
+          value={filterSegment}
+          onChange={(e) => setFilterSegment(e.target.value)}
           className="p-2 border rounded"
         >
           <option value="">Todos os segmentos</option>
-          {segmentos.map((seg) => (
-            <option key={seg} value={seg}>{seg}</option>
+          {segments.map((seg) => (
+            <option key={seg} value={seg}>
+              {seg}
+            </option>
           ))}
         </select>
 
         <select
-          value={filtroPorte}
-          onChange={(e) => setFiltroPorte(e.target.value)}
+          value={filterSize}
+          onChange={(e) => setFilterSize(e.target.value)}
           className="p-2 border rounded"
         >
           <option value="">Todos os portes</option>
-          {portes.map((p) => (
-            <option key={p} value={p}>{p}</option>
+          {sizes.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
           ))}
         </select>
 
         <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
+          value={filterState}
+          onChange={(e) => setFilterState(e.target.value)}
           className="p-2 border rounded"
         >
           <option value="">Todos os estados</option>
-          {estados.map((e) => (
-            <option key={e} value={e}>{e}</option>
+          {states.map((e) => (
+            <option key={e} value={e}>
+              {e}
+            </option>
           ))}
         </select>
 
         <select
-          value={filtroCidade}
-          onChange={(e) => setFiltroCidade(e.target.value)}
+          value={filterCity}
+          onChange={(e) => setFilterCity(e.target.value)}
           className="p-2 border rounded"
         >
           <option value="">Todas as cidades</option>
-          {cidades.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          {cities.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clientesFiltrados.map((cliente, index) => (
-          <div key={index} className="bg-white p-4 rounded shadow">
-            <h3 className="font-bold text-lg">{cliente.empresa}</h3>
-            <p>Segmento: {cliente.segmento || "Não Informado"}</p>
-            <p>Porte: {cliente.porte || "Não Informado"}</p>
-            <p>Estado: {cliente.estado || "Não Informado"}</p>
-            <p>Cidade: {cliente.cidade || "Não Informado"}</p>
-            <p>Contato: {cliente.contato || "Não Informado"}</p>
-            <p>Cargo: {cliente.cargo}</p>
-            <p>Telefone: {cliente.telefone || "Não Informado"}</p>
-            <p>Email: {cliente.email || "Não Informado"}</p>
+        {filtered.map((cliente, index) => (
+          <div
+            key={index}
+            className="bg-white p-4 rounded shadow min-h-[200px] flex flex-col"
+          >
+            <h3 className="font-bold text-lg">{cliente.company}</h3>
+            <p>Segmento: {cliente.segment || "Not Provided"}</p>
+            <p>Porte: {cliente.size || "Not Provided"}</p>
+            <p>Estado: {cliente.state || "Not Provided"}</p>
+            <p>Cidade: {cliente.city || "Not Provided"}</p>
+            <p>Contato: {cliente.contact || "Not Provided"}</p>
+            <p>Cargo: {cliente.role}</p>
+            <p>Telefone: {cliente.phone || "Not Provided"}</p>
+            <p>Email: {cliente.email || "Not Provided"}</p>
           </div>
         ))}
       </div>
