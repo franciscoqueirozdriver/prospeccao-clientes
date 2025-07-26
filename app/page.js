@@ -1,29 +1,33 @@
+"use client";
 import { useState, useMemo, useEffect } from 'react';
 import ClienteCard from '../components/ClienteCard';
 
-export async function getServerSideProps() {
-  const res = await fetch('http://localhost:3000/api/clientes');
-  const clientesData = await res.json();
-
-  return {
-    props: { clientesData },
-  };
-}
-
-export default function Home({ clientesData }) {
+export default function Home() {
   const [busca, setBusca] = useState('');
   const [filtroSegmento, setFiltroSegmento] = useState('');
   const [filtroPorte, setFiltroPorte] = useState('');
-  const [clientes, setClientes] = useState(clientesData);
+  const [clientes, setClientes] = useState([]);
 
-  const segmentos = useMemo(() => {
-    return [...new Set(clientesData.map((c) => c.segmento))].filter(Boolean);
-  }, [clientesData]);
+  // 🔍 Filtros dinâmicos baseados nos clientes carregados
+  const segmentos = useMemo(
+    () => [...new Set(clientes.map((c) => c.segmento))].filter(Boolean),
+    [clientes]
+  );
 
-  const portes = useMemo(() => {
-    return [...new Set(clientesData.map((c) => c.porte))].filter(Boolean);
-  }, [clientesData]);
+  const portes = useMemo(
+    () => [...new Set(clientes.map((c) => c.porte))].filter(Boolean),
+    [clientes]
+  );
 
+  // 🔄 Carrega clientes via API
+  useEffect(() => {
+    fetch('/api/clientes')
+      .then((res) => res.json())
+      .then(setClientes)
+      .catch((err) => console.error('Erro ao carregar clientes:', err));
+  }, []);
+
+  // 🔍 Filtro de busca e seleção de segmento/porte
   const clientesFiltrados = useMemo(() => {
     return clientes.filter((cliente) => {
       const buscaLower = busca.toLowerCase();
@@ -39,6 +43,7 @@ export default function Home({ clientesData }) {
     });
   }, [clientes, busca, filtroSegmento, filtroPorte]);
 
+  // 🔄 Função para mover cliente para o kanban
   const moverClienteParaKanban = (clienteSelecionado) => {
     setClientes((clientesAnteriores) =>
       clientesAnteriores.map((c) =>
@@ -50,27 +55,26 @@ export default function Home({ clientesData }) {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
-        <a href="/kanban" className="text-sm text-blue-600 hover:underline">Ver Kanban</a>
-      </div>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Prospecção de Clientes</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Buscar por empresa ou contato"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="col-span-2 p-2 border rounded shadow-sm"
-        />
+      {/* 🔍 Campo de busca */}
+      <input
+        type="text"
+        placeholder="Buscar por empresa ou contato..."
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+        className="border p-2 rounded mb-4 w-full"
+      />
 
+      {/* 🔽 Filtros */}
+      <div className="flex gap-2 mb-4">
         <select
           value={filtroSegmento}
           onChange={(e) => setFiltroSegmento(e.target.value)}
-          className="p-2 border rounded shadow-sm"
+          className="border p-2 rounded"
         >
-          <option value="">Todos os segmentos</option>
+          <option value="">Todos os Segmentos</option>
           {segmentos.map((seg) => (
             <option key={seg} value={seg}>{seg}</option>
           ))}
@@ -79,21 +83,22 @@ export default function Home({ clientesData }) {
         <select
           value={filtroPorte}
           onChange={(e) => setFiltroPorte(e.target.value)}
-          className="p-2 border rounded shadow-sm"
+          className="border p-2 rounded"
         >
-          <option value="">Todos os portes</option>
+          <option value="">Todos os Portes</option>
           {portes.map((p) => (
             <option key={p} value={p}>{p}</option>
           ))}
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clientesFiltrados.map((cliente, index) => (
+      {/* 📌 Listagem de clientes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {clientesFiltrados.map((c) => (
           <ClienteCard
-            key={index}
-            cliente={cliente}
-            onMoverParaKanban={moverClienteParaKanban}
+            key={c.empresa}
+            cliente={c}
+            moverParaKanban={() => moverClienteParaKanban(c)}
           />
         ))}
       </div>

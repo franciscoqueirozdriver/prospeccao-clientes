@@ -22,7 +22,10 @@ export async function GET(req) {
     const arrayBuffer = await fileRes.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    const rows = XLSX.utils.sheet_to_json(sheet, {
+      defval: "",
+      range: "A1:BW3000",
+    });
 
     if (!rows.length) {
       console.warn("⚠️ No rows found in spreadsheet");
@@ -33,15 +36,15 @@ export async function GET(req) {
 
     const clientes = rows.map((row, idx) => {
       const cliente = {
-        company: row["Organização - Nome"],
-        contact: row["Negócio - Pessoa de contato"],
-        segment: row["Organização - Segmento"],
-        size: row["Organização - Tamanho da empresa"],
-        state: row["uf"],
-        city: row["cidade_estimada"],
-        phone: row["Pessoa - Telefone"] || row["Pessoa - Celular"],
+        empresa: row["Organização - Nome"],
+        contato: row["Negócio - Pessoa de contato"],
+        segmento: row["Organização - Segmento"],
+        porte: row["Organização - Tamanho da empresa"],
+        estado: row["uf"],
+        cidade: row["cidade_estimada"],
+        telefone: row["Pessoa - Telefone"] || row["Pessoa - Celular"],
         email: row["Pessoa - Email - Work"],
-        role: row["Pessoa - Cargo"] || "Not Provided",
+        cargo: row["Pessoa - Cargo"] || "Não Informado",
       };
 
       for (const [key, value] of Object.entries(cliente)) {

@@ -1,5 +1,6 @@
+"use client";
 import { useEffect, useState } from 'react';
-import KanbanBoard from '../components/KanbanBoard';
+import KanbanBoard from '../../components/KanbanBoard';
 import Link from 'next/link';
 import Head from 'next/head';
 
@@ -25,4 +26,3 @@ export default function KanbanPage() {
       <KanbanBoard leads={leads} />
     </div>
   );
-}
